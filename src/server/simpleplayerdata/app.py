@@ -17,11 +17,11 @@ app.config.from_object('simpleplayerdata.config.Config')
 def refresh_list():
     global last_interactions, player_list, debugger
     debugger = len(last_interactions)
-    min_time = time() - app.config['timeout']
+    min_time = time() - app.config['TIMEOUT']
     last_interactions = {player: last_ping for player, last_ping in last_interactions.items() if last_ping >= min_time}
     with app.app_context():
         player_list = jsonify(list(last_interactions.keys()))
-    threading.Timer(app.config['refresh'], refresh_list).start()
+    threading.Timer(app.config['REFRESH'], refresh_list).start()
 
 
 @app.route('/', methods=['GET'])
