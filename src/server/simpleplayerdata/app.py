@@ -7,7 +7,6 @@ from flask import request, jsonify
 
 last_interactions = dict()
 player_list = "[ ]"
-debugger = 0
 
 app = Flask(__name__)
 app.config.from_object('simpleplayerdata.config.Config')
@@ -15,8 +14,7 @@ app.config.from_object('simpleplayerdata.config.Config')
 
 @app.before_first_request
 def refresh_list():
-    global last_interactions, player_list, debugger
-    debugger = len(last_interactions)
+    global last_interactions, player_list
     min_time = time() - app.config['TIMEOUT']
     last_interactions = {player: last_ping for player, last_ping in last_interactions.items() if last_ping >= min_time}
     with app.app_context():
@@ -47,13 +45,12 @@ def page_not_found(e):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='host a little web server that keeps a list of clients connected to the server')
-    parser.add_argument('--port', dest='port', metavar='-p', default=5000, type=int, help='the port number')
-    parser.add_argument('--timeout', dest='timeout', metavar='-t', type=int, default=100,
+    parser.add_argument('--timeout', dest='timeout', metavar='-t', type=int, default=180,
                         help='the time in seconds until a client should be considered disconnected')
-    parser.add_argument('--refresh', dest='refresh', metavar='-r', type=int, default=1,
+    parser.add_argument('--refresh', dest='refresh', metavar='-r', type=int, default=30,
                         help='the interval in seconds in which the player list should be updated')
     args = parser.parse_args()
 
     app.config['timeout'] = args.timeout
     app.config['refresh'] = args.refresh
-    app.run(port=args.port)
+    app.run()
