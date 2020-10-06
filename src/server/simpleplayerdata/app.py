@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+import json
+import os
 import threading
 import argparse
 from time import time
@@ -7,10 +10,11 @@ from flask import request, jsonify
 
 last_interactions = dict()
 player_list = "[ ]"
+cape_list = set()
 
 app = Flask(__name__)
 app.config.from_object('simpleplayerdata.config.Config')
-
+# app.config.from_object('config.Config')  # app.config.from_object('simpleplayerdata.config.Config') when in development with Flask
 
 @app.before_first_request
 def refresh_list():
@@ -22,13 +26,24 @@ def refresh_list():
     threading.Timer(app.config['REFRESH'], refresh_list).start()
 
 
+@app.before_first_request
+def refresh_capes():
+    global cape_list
+    cape_list.clear()
+    extension = '.' + str(app.config['CAPE_FILETYPE']).lower()
+    for file in os.listdir(app.config['CAPE_DIR']):
+        if file.endswith(extension):
+            cape_list.add(file.replace(extension, ''))
+    threading.Timer(app.config['CAPE_REFRESH'], refresh_capes).start()
+
+
 @app.route('/', methods=['GET'])
 def home():
     return "<h1>Player Data API</h1><p>Nothing to see here.</p>"
 
 
 @app.route('/api/players', methods=['GET'])
-def get_player_list():
+def get_player_list():  # We could update the list in a separate method instead of GET.
     # TODO: add spam limit and limit the number of player names an ip can register
     if 'player' in request.args:
         # Add the player to our player list
@@ -36,6 +51,23 @@ def get_player_list():
             return "Error: Invalid player name"
         last_interactions[request.args['player']] = time()
     return player_list
+
+
+@app.route('/api/capes', methods=['POST'])
+def get_cape_list():
+    capes = dict()
+    if 'players' in request.json:
+        base_url = app.config['CAPE_URL']
+        extension = '.' + str(app.config['CAPE_FILETYPE']).lower()
+        uuids = request.json['players']
+        if not isinstance(uuids, list):
+            return "Error: Invalid Request"
+        if len(uuids) > 500:
+            return "Error: Too many uuids"
+        for uuid in uuids:
+            if isinstance(uuid, str) and uuid in cape_list and len(uuid) < 64:
+                capes[uuid] = base_url + uuid + extension
+    return jsonify(capes)
 
 
 @app.errorhandler(404)
