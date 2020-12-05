@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import json
 import os
 import threading
 import argparse
@@ -42,24 +41,41 @@ def home():
     return "<h1>Player Data API</h1><p>Nothing to see here.</p>"
 
 
-@app.route('/api/players', methods=['GET'])
-def get_player_list():  # We could update the list in a separate method instead of GET.
-    # TODO: add spam limit and limit the number of player names an ip can register
-    if 'player' in request.args:
-        # Add the player to our player list
-        if len(request.args['player']) > 16:
-            return "Error: Invalid player name"
-        last_interactions[request.args['player']] = time()
+@app.route('/playerlist/fetch', methods=['GET'])
+def get_player_list():
+    if request.content_type != 'application/json':
+        return 'Error: Invalid format'
+    if 'names' in request.json:
+        names = request.json['names']
+        if not isinstance(names, list):
+            return "Error: Invalid Request"
+        if len(names) > 500:
+            return "Error: Too many names"
+        return jsonify([name for name in names if name in last_interactions])
     return player_list
 
 
-@app.route('/api/capes', methods=['POST'])
+@app.route('/playerlist/update', methods=['POST'])
+def update_playerlist():
+    # TODO: add spam limit and limit the number of player names an ip can register
+    if 'name' not in request.values:
+        return 'Error: No name provided'
+    # Add the player to our player list
+    if len(request.values['name']) > 16:
+        return "Error: Invalid player name"
+    last_interactions[request.values['name']] = time()
+    return "Success!"
+
+
+@app.route('/capes/fetch', methods=['POST'])
 def get_cape_list():
+    if request.content_type != 'application/json':
+        return 'Error: Invalid format'
     capes = dict()
-    if 'players' in request.json:
+    if 'uuids' in request.json:
         base_url = app.config['CAPE_URL']
         extension = '.' + str(app.config['CAPE_FILETYPE']).lower()
-        uuids = request.json['players']
+        uuids = request.json['uuids']
         if not isinstance(uuids, list):
             return "Error: Invalid Request"
         if len(uuids) > 500:
