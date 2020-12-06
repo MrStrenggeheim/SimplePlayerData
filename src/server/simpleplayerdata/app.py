@@ -41,9 +41,9 @@ def home():
     return "<h1>Player Data API</h1><p>Nothing to see here.</p>"
 
 
-@app.route('/playerlist/fetch', methods=['GET'])
+@app.route('/playerlist/fetch', methods=['POST'])
 def get_player_list():
-    if request.content_type != 'application/json':
+    if 'application/json' not in request.content_type:
         return 'Error: Invalid format'
     if 'names' in request.json:
         names = request.json['names']
@@ -69,7 +69,7 @@ def update_playerlist():
 
 @app.route('/capes/fetch', methods=['POST'])
 def get_cape_list():
-    if request.content_type != 'application/json':
+    if 'application/json' not in request.content_type:
         return 'Error: Invalid format'
     capes = dict()
     if 'uuids' in request.json:

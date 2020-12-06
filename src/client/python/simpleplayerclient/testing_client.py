@@ -3,12 +3,12 @@ import json
 import time
 
 
-url = 'http://127.0.0.1:5000/api/'
+url = 'http://127.0.0.1:5000/'
 
 
 def fetch_list(player_name):
-    print(requests.post(url + 'playerlist/update', data={'name': player_name}))
-    response = requests.get(url + 'playerlist/fetch', json={'names': ['Test', 'Test2', 'Test3']})
+    print(requests.post(url + 'playerlist/update', json={'name': player_name}))
+    response = requests.post(url + 'playerlist/fetch', json={'names': ['Test', 'Test2', 'Test3']})
     return response.content
 
 
